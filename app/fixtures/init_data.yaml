@@ -1,0 +1,42 @@
+- model: custom_auth.userrole
+  pk: 1
+  fields:
+    name: user
+- model: custom_auth.userrole
+  pk: 2
+  fields:
+    name: moderator
+- model: custom_auth.userrole
+  pk: 3
+  fields:
+    name: administrator
+- model: custom_auth.user
+  pk: 1
+  fields:
+    username: user
+    email: some@email.com
+    notifications: true
+    role: 1
+    password: 1234
+    is_superuser: false
+    is_staff: false
+- model: custom_auth.user
+  pk: 2
+  fields:
+    username: mod
+    email: some@email.com
+    notifications: true
+    role: 2
+    password: 1234
+    is_superuser: false
+    is_staff: true
+- model: custom_auth.user
+  pk: 3
+  fields:
+    username: admin
+    email: some@email.com
+    notifications: false
+    role: 3
+    password: 1234
+    is_superuser: true
+    is_staff: true

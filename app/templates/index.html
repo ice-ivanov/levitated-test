@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js" integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ==" crossorigin="anonymous"></script>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>User Form!</title>
+</head>
+<body>
+<div class="col center">
+    <h1 class="text-center" id="greetings">User Creation!</h1>
+    <div class="row">
+        <a href="user-list" class="text-center"> -> to user-list.</a>
+    </div>
+    <div class="container col w-50 p-3">
+        <form class="needs-validation" id="userForm">
+            <div class="form-group">
+                <label for="userNameInput">User Name</label>
+                <input id="userNameInput" type="text" class="form-control" placeholder="User Name" required>
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+                <div class="invalid-feedback">
+                    Please choose a username.
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="formControlSelect">Example select</label>
+                <select class="form-control" id="formControlSelect" required>
+                    <option value="" selected disabled>Choose</option>
+                    <option value="_addNew">Create New Role</option>
+                </select>
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+                <div class="invalid-feedback">
+                    Please choose a Role.
+                </div>
+            </div>
+            <div class="form-group disabled">
+                <label for="roleInput">Role</label>
+                <input id="roleInput" type="text" class="form-control"
+                       placeholder="New role" disabled>
+                <div id="roleFeedBack">
+                </div>
+            </div>
+            <div class="form-check">
+                <input id="notificationInput" type="checkbox" class="form-check-input">
+                <label class="form-check-label" for="notificationInput">Check for notifications.</label>
+            </div>
+            <span class="badge red" style="visibility: hidden;">Some Error occurred!</span>
+            <button type="submit" class="btn btn-primary mt-2" id="submitButton">Submit</button>
+        </form>
+        <div class="col" id="messagesPlace">
+
+        </div>
+    </div>
+</div>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<script async>
+    var messagesPlace = $("#messagesPlace");
+    var userNameInput = $("#userNameInput");
+    var notificationInput = $("#notificationInput");
+    var roleInput = $("#roleInput");
+    var formControlSelect = $("#formControlSelect");
+    var urlParams = new URLSearchParams(window.location.search);
+    var axiosInsrtance = axios.create({withCredentials: true});
+    function displayMessage(message, success) {
+        var el = document.createElement('span');
+        el.classList.add('badge');
+        el.classList.add(success ? 'green' : 'red');
+        el.innerHTML = message;
+        messagesPlace.append(el);
+        setTimeout(function() {
+            el.remove();
+        }, 5000)
+    }
+
+    function selectRole(event) {
+        if (event.target) {
+            if (event.target.value === '_addNew') {
+                roleInput.prop("disabled", false);
+                roleInput.prop("required", true);
+            } else {
+                roleInput.val('');
+                roleInput.prop("disabled", true);
+                roleInput.prop("required", false);
+            }
+        }
+    }
+
+    function setErrorOnField(key, add) {
+        switch(key) {
+            case 'role': {
+                if (roleInput.disabled) {
+                    formControlSelect[add ? 'addClass' : 'removeClass']('is-invalid');
+                } else {
+                    roleInput[add ? 'addClass' : 'removeClass']('is-invalid');
+                }
+                break;
+            }
+            case 'username': {
+                userNameInput[add ? 'addClass' : 'removeClass']('is-invalid');
+                break;
+            }
+        }
+    }
+
+    function getRoles () {
+        axiosInsrtance.get('http://localhost:8000/roles')
+            .then(function (res) {
+                if (res.data && res.data.length) {
+                    res.data.forEach(function(item) {
+                        var option = document.createElement('option');
+                        option.innerHTML = item.name;
+                        option.value = item.id;
+                        formControlSelect.append(option)
+                    });
+                    var id = urlParams.get('id');
+                    if (id) {
+                        getUser(id, res.data);
+                    }
+                }
+            })
+            .catch(function (error) {
+                console.log(error)
+                displayMessage("Error on load roles!");
+            });
+    }
+    function getUser(id, roles){
+        axiosInsrtance.get('http://localhost:8000/users/'+id)
+            .then(function (res) {
+                if (res.data) {
+                    var role = roles.filter(function(r){
+                        return r.name === res.data.role_name
+                    })[0];
+                    if (role) {
+                        formControlSelect.val(role.id);
+                    }
+                   
+                    userNameInput.val(res.data.username);
+                    notificationInput.prop('checked', res.data.notifications);
+                    $("#greetings").html("Update User!");
+                }
+            })
+            .catch(function (error) {
+                console.log(error);
+                displayMessage("Couldn't upload user Data.");
+            });
+    }
+
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            getRoles();
+
+            formControlSelect.on('change', selectRole);
+            var forms = $(document).find('.needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() !== false) {
+                        var data = {
+                            username: userNameInput.val(),
+                            notifications: notificationInput.prop("checked") == true,
+                            role: formControlSelect.val(),
+                            new_role: formControlSelect.val() === '_addNew'
+                        };
+                        if (formControlSelect.val() === '_addNew' && roleInput.val()) {
+                            data.role = roleInput.val()
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+                        form.classList.remove('was-validated');
+                        var id = urlParams.get('id');
+                        axiosInsrtance({
+                            url: id ? 'http://localhost:8000/users/' + id + '/': 'http://localhost:8000/users/',
+                            method: id ? 'patch' : 'post',
+                            data: data
+                        })
+                            .then(function() {
+                                var link = document.createElement('a');
+                                link.href = '/user-list';
+                                link.click();
+
+                            })
+                            .catch(function(e) {
+                                if (e && e.response && e.response.data) {
+                                    Object.keys(e.response.data).forEach(function(key){
+                                        var message = e.response.data[key];
+                                        setErrorOnField(key, true);
+                                        displayMessage(message);
+                                        form.classList.remove('was-validated');
+                                    });
+                                }
+                            });
+                    }
+
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+</body>
+</html>
